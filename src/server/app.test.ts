@@ -75,4 +75,32 @@ describe("запись и отмена", () => {
     await settle(app);
     expect(() => app.startUndo(runId)).toThrow("уже отменён");
   });
+
+  test("пачка, подтверждённая одним разом, целиком попадает в журнал и целиком отменяется", async () => {
+    const titles = ["Первая", "Вторая", "Третья"];
+    const yandex = memoryService(
+      "yandex",
+      titles.map((t, i) => track("yandex", `y${i}`, t)),
+      [],
+    );
+    const spotify = memoryService(
+      "spotify",
+      [],
+      titles.map((t, i) => track("spotify", `s${i}`, t)),
+    );
+    spotify.addLikes = async function (tracks, onProgress) {
+      for (const t of tracks) this.likes.unshift(t);
+      onProgress?.(tracks.length);
+    };
+    const app = new App(new Store(":memory:"));
+    await app.startDemo({ yandex, spotify });
+    app.startPlan("yandex-spotify");
+    await settle(app);
+    app.startApply();
+    await settle(app);
+    expect(app.state().lastRun?.added.spotify).toBe(3);
+    app.startUndo(app.state().lastRun?.id ?? 0);
+    await settle(app);
+    expect(spotify.likes).toHaveLength(0);
+  });
 });

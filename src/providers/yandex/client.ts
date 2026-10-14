@@ -197,11 +197,12 @@ export class YandexService implements MusicService {
   }
 
   async addLikes(tracks: Track[], onProgress?: (done: number) => void): Promise<void> {
-    // По одному: у пачки одна дата добавления, и порядок в «Мне нравится» потеряется.
-    for (const [index, track] of tracks.entries()) {
-      await this.client.changeLikes(this.uid, "add-multiple", [likeId(track)]);
-      onProgress?.(index + 1);
-      await sleep(120);
+    // Пачками: так в разы меньше запросов. Порядок пачек сохраняется, внутри пачки у треков одна дата.
+    for (let i = 0; i < tracks.length; i += 50) {
+      const batch = tracks.slice(i, i + 50);
+      await this.client.changeLikes(this.uid, "add-multiple", batch.map(likeId));
+      onProgress?.(i + batch.length);
+      await sleep(300);
     }
   }
 

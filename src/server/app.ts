@@ -353,14 +353,18 @@ export class App {
           // Снимок: решения, принятые во время записи, не меняют то, что пишется и попадает в журнал.
           const tracks = items.map((i) => i.match as Track);
           this.progress(`write-${to}`, 0, tracks.length);
+          let recorded = 0;
           await service.addLikes(tracks, (done) => {
-            const track = tracks[done - 1];
-            const item = items[done - 1];
-            if (track) this.store.recordAdded(runId, to, track);
-            if (item) {
-              item.status = "exists";
-              item.decision = undefined;
-              item.added = true;
+            // Сервис сообщает о целой пачке: записываем в журнал все треки, подтверждённые с прошлого раза.
+            for (; recorded < done; recorded++) {
+              const track = tracks[recorded];
+              const item = items[recorded];
+              if (track) this.store.recordAdded(runId, to, track);
+              if (item) {
+                item.status = "exists";
+                item.decision = undefined;
+                item.added = true;
+              }
             }
             added[to] = done;
             this.progress(`write-${to}`, done, tracks.length);

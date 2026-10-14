@@ -230,11 +230,15 @@ export class SpotifyService implements MusicService {
   }
 
   async addLikes(tracks: Track[], onProgress?: (done: number) => void): Promise<void> {
-    // По одному: у пачки одна дата добавления, и порядок в Liked Songs потеряется.
-    for (const [index, track] of tracks.entries()) {
-      await this.client.changeLibrary("PUT", [track.id]);
-      onProgress?.(index + 1);
-      await sleep(120);
+    // Пачками по 40 (максимум API): у приложения разработчика строгая квота запросов.
+    // Порядок пачек сохраняется, внутри пачки у треков одна дата добавления.
+    for (let i = 0; i < tracks.length; i += 40) {
+      const batch = tracks.slice(i, i + 40);
+      await this.client.changeLibrary(
+        "PUT",
+        batch.map((t) => t.id),
+      );
+      onProgress?.(i + batch.length);
     }
   }
 
