@@ -75,8 +75,29 @@ describe("compare", () => {
     expect(
       compare(
         yandex({ title: "Stay", artists: ["The Kid LAROI", "Justin Bieber"] }),
-        spotify({ title: "Stay (with Justin Bieber)", artists: ["The Kid LAROI"] }),
+        spotify({ title: "Stay (with Justin Bieber)", artists: ["The Kid LAROI", "Justin Bieber"] }),
       ),
+    ).toBe("high");
+  });
+
+  test("live с оркестром не совпадает со студийной записью", () => {
+    expect(
+      compare(
+        yandex({ title: "Nothing Else Matters", artists: ["Metallica"] }),
+        spotify({ title: "Nothing Else Matters - Live with Orchestra", artists: ["Metallica"] }),
+      ),
+    ).toBeNull();
+  });
+
+  test("разные японские песни одного исполнителя не считаются одной", () => {
+    expect(
+      compare(
+        yandex({ title: "夜に駆ける", artists: ["YOASOBI"] }),
+        spotify({ title: "群青", artists: ["YOASOBI"], durationMs: 201_000 }),
+      ),
+    ).toBeNull();
+    expect(
+      compare(yandex({ title: "群青", artists: ["YOASOBI"] }), spotify({ title: "群青", artists: ["YOASOBI"] })),
     ).toBe("high");
   });
 

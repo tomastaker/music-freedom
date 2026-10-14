@@ -87,7 +87,8 @@ async function connectSpotify(): Promise<{ client: SpotifyClient; likes: Track[]
       saved = { clientId: saved.clientId, ...(await refreshTokens(saved.clientId, saved)) };
       await saveTokens({ ...(await loadTokens()), spotify: saved });
     }
-    const client = new SpotifyClient(saved.accessToken);
+    const token = saved.accessToken;
+    const client = new SpotifyClient(async () => token);
     log(`Аккаунт: ${await client.displayName()}`);
     const likes = await client.likedTracks((loaded, total) =>
       process.stdout.write(`\rЗагружаю лайки: ${loaded}/${total}`),

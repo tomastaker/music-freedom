@@ -39,8 +39,10 @@ const CYRILLIC_TO_LATIN: Record<string, string> = {
   я: "ya",
 };
 
+// «with» сюда не входит: «Live with Orchestra» и «(With Me)» — часть названия. Соавтор «(with X)» снимается
+// отдельно в fullTitle, только когда X действительно один из исполнителей трека.
 const NOISE_WORDS =
-  "featuring|feat|ft|with|prod|remaster|remastered|mono|stereo|radio edit|single version|album version|explicit|bonus track";
+  "featuring|feat|ft|prod|remaster|remastered|mono|stereo|radio edit|single version|album version|explicit|bonus track";
 // Пометки, которые сервисы пишут по-разному: в скобках, после « - » или в отдельном поле версии.
 // «Live», «Acoustic», «Remix» не убираются: это другая запись, а не другая подпись к той же.
 const BRACKETED_NOISE = new RegExp(String.raw`[([][^)\]]*\b(?:${NOISE_WORDS})\b[^)\]]*[)\]]`, "gi");
@@ -55,11 +57,21 @@ export function normalize(text: string): string {
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/&/g, " and ");
-  return plain.replace(/[^a-z0-9]+/g, " ").trim();
+  // Буквы любых алфавитов остаются: японские или греческие названия не должны схлопываться в пустую строку.
+  return plain.replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 }
 
+const WITH_ARTIST = /[([]\s*with\s+([^)\]]+)[)\]]/gi;
+
 /** Название вместе с версией: Spotify пишет версию в названии, Яндекс в отдельном поле. */
-const fullTitle = (t: Track) => normalize(t.version ? `${t.title} (${t.version})` : t.title);
+function fullTitle(t: Track): string {
+  const raw = t.version ? `${t.title} (${t.version})` : t.title;
+  const artists = t.artists.map(normalize);
+  const withoutGuests = raw.replace(WITH_ARTIST, (whole, guest: string) =>
+    artists.includes(normalize(guest)) ? " " : whole,
+  );
+  return normalize(withoutGuests);
+}
 
 function sameArtist(a: Track, b: Track): boolean {
   const left = a.artists.map(normalize).filter(Boolean);
@@ -72,7 +84,8 @@ function sameArtist(a: Track, b: Track): boolean {
 /** Сравнивает трек-источник с кандидатом из другого сервиса. */
 export function compare(source: Track, candidate: Track): MatchLevel | null {
   if (source.isrc && candidate.isrc && source.isrc.toUpperCase() === candidate.isrc.toUpperCase()) return "isrc";
-  if (fullTitle(source) !== fullTitle(candidate) || !sameArtist(source, candidate)) return null;
+  const title = fullTitle(source);
+  if (!title || title !== fullTitle(candidate) || !sameArtist(source, candidate)) return null;
   const durationDiff = Math.abs(source.durationMs - candidate.durationMs);
   if (durationDiff <= 3000) return "high";
   return durationDiff <= 15000 ? "medium" : null;

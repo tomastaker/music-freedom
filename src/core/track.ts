@@ -10,4 +10,6 @@ export type Track = {
   album?: string;
   durationMs: number;
   isrc?: string;
+  /** Альбом в сервисе: Яндексу он нужен, чтобы поставить лайк конкретному изданию трека. */
+  albumId?: string;
 };

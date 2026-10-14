@@ -3,15 +3,28 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "bun --hot src/server/main.ts",
+    "start": "NODE_ENV=production bun src/server/main.ts",
     "probe": "bun run scripts/probe.ts",
     "build:probe": "bun run scripts/build-probe.ts",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
-    "lint:fix": "biome check --write ."
+    "lint:fix": "biome check --write .",
+    "test": "bun test",
+    "build": "bun run scripts/build.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
     "@types/bun": "^1.4.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@fontsource/golos-text": "^5.3.0",
+    "@fontsource/share-tech-mono": "^5.3.0",
+    "@phosphor-icons/react": "^2.1.10",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
   }
 }

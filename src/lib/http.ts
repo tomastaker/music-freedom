@@ -10,6 +10,16 @@ export class HttpError extends Error {
   }
 }
 
+/** Сервис попросил ждать дольше, чем разумно держать пользователя у экрана. */
+export class RateLimitError extends HttpError {
+  constructor(
+    service: string,
+    readonly retryAt: number,
+  ) {
+    super(service, 429, "rate limited");
+  }
+}
+
 export async function readJson<T>(service: string, res: Response): Promise<T> {
   const text = await res.text();
   if (!res.ok) throw new HttpError(service, res.status, text.slice(0, 500));

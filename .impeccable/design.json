@@ -1,0 +1,294 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-14T16:10:30.369482Z",
+  "title": "Design System: music-freedom",
+  "extensions": {
+    "colorMeta": {
+      "body-plastic": {
+        "role": "neutral",
+        "displayName": "Чёрный пластик",
+        "canonical": "#17181a"
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Панель",
+        "canonical": "#1f2023"
+      },
+      "surface-raised": {
+        "role": "neutral",
+        "displayName": "Поднятая панель",
+        "canonical": "#27292d"
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Линия",
+        "canonical": "#34363b"
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Текст",
+        "canonical": "#e8eaed"
+      },
+      "text-dim": {
+        "role": "neutral",
+        "displayName": "Приглушённый текст",
+        "canonical": "#a6abb3"
+      },
+      "window-black": {
+        "role": "neutral",
+        "displayName": "Чёрное окошко",
+        "canonical": "#0d0e0f"
+      },
+      "amber": {
+        "role": "primary",
+        "displayName": "Янтарь счётчиков",
+        "canonical": "#f2a33a"
+      },
+      "amber-dim": {
+        "role": "primary",
+        "displayName": "Тусклый янтарь",
+        "canonical": "#8a6427"
+      },
+      "rec-red": {
+        "role": "primary",
+        "displayName": "Красная клавиша записи",
+        "canonical": "#e0402f"
+      },
+      "rec-red-hover": {
+        "role": "primary",
+        "displayName": "Красная клавиша, hover",
+        "canonical": "#f04e3c"
+      },
+      "brick": {
+        "role": "secondary",
+        "displayName": "Кирпич",
+        "canonical": "#e07a66"
+      },
+      "aluminium-top": {
+        "role": "secondary",
+        "displayName": "Алюминий, верх",
+        "canonical": "#dcdfe3"
+      },
+      "aluminium-bottom": {
+        "role": "secondary",
+        "displayName": "Алюминий, низ",
+        "canonical": "#b3b8be"
+      },
+      "aluminium-text": {
+        "role": "neutral",
+        "displayName": "Текст на алюминии",
+        "canonical": "#17181a"
+      },
+      "aluminium-dim": {
+        "role": "neutral",
+        "displayName": "Вторичный текст на алюминии",
+        "canonical": "#474c54"
+      },
+      "service-yandex": {
+        "role": "tertiary",
+        "displayName": "Точка Яндекса",
+        "canonical": "#ffcc00"
+      },
+      "service-spotify": {
+        "role": "tertiary",
+        "displayName": "Точка Spotify",
+        "canonical": "#1ed760"
+      }
+    },
+    "typographyMeta": {
+      "ui": {
+        "displayName": "Интерфейс",
+        "purpose": "Весь читаемый текст, Golos Text."
+      },
+      "counter": {
+        "displayName": "Счётчик",
+        "purpose": "Цифры в окошках, Share Tech Mono."
+      },
+      "plate": {
+        "displayName": "Табличка",
+        "purpose": "Надпись на деке, верхний регистр."
+      }
+    },
+    "shadows": [
+      {
+        "name": "deck",
+        "value": "inset 0 1px 0 rgb(255 255 255 / 0.6), 0 10px 30px rgb(0 0 0 / 0.35)",
+        "purpose": "Алюминиевая дека."
+      },
+      {
+        "name": "tape-window",
+        "value": "inset 0 3px 8px rgb(0 0 0 / 0.65)",
+        "purpose": "Вдавленное окно ленты."
+      },
+      {
+        "name": "counter",
+        "value": "inset 0 2px 5px rgb(0 0 0 / 0.7)",
+        "purpose": "Вдавленное окошко счётчика."
+      },
+      {
+        "name": "rec-button",
+        "value": "0 0 0 5px #27292d, 0 6px 16px rgb(0 0 0 / 0.45)",
+        "purpose": "Ободок и тень кнопки записи."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Прокат цифр 520ms, намотка 600ms, прогресс 300ms, кнопка записи 160ms."
+      },
+      {
+        "name": "reel-spin",
+        "value": "1.6s linear infinite",
+        "purpose": "Вращение катушек только пока идёт работа; отключено при prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "tablet",
+        "value": "1080px"
+      },
+      {
+        "name": "mobile",
+        "value": "640px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Дека",
+      "kind": "card",
+      "refersTo": "deck",
+      "description": "Алюминиевая панель сервиса с окном ленты и счётчиком.",
+      "html": "<div class=\"ds-deck\"><div class=\"ds-deck-head\"><b>Яндекс Музыка</b><span class=\"ds-counter\">1284</span></div><div class=\"ds-window\"></div><div class=\"ds-plate\">Дека А · воспроизведение</div></div>",
+      "css": ".ds-deck{width:380px;padding:20px 22px 16px;border-radius:10px;color:#17181a;background:linear-gradient(180deg,#dcdfe3,#b3b8be);box-shadow:inset 0 1px 0 rgb(255 255 255/.6),0 10px 30px rgb(0 0 0/.35);font:15px 'Golos Text',system-ui,sans-serif;display:grid;gap:14px}.ds-deck-head{display:flex;justify-content:space-between;align-items:center;font-size:22px}.ds-counter{padding:6px 10px;border-radius:6px;background:#0d0e0f;box-shadow:inset 0 2px 5px rgb(0 0 0/.7);color:#f2a33a;font:40px/1 'Share Tech Mono',ui-monospace,monospace;letter-spacing:.04em}.ds-window{height:92px;border-radius:46px;background:#0d0e0f;box-shadow:inset 0 3px 8px rgb(0 0 0/.65)}.ds-plate{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#474c54}"
+    },
+    {
+      "name": "Счётчик",
+      "kind": "custom",
+      "refersTo": "counter",
+      "description": "Янтарные цифры в чёрном вдавленном окошке.",
+      "html": "<span class=\"ds-counter\">0420</span>",
+      "css": ".ds-counter{display:inline-flex;padding:6px 10px;border-radius:6px;background:#0d0e0f;box-shadow:inset 0 2px 5px rgb(0 0 0/.7);color:#f2a33a;font:40px/1 'Share Tech Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;letter-spacing:.04em}"
+    },
+    {
+      "name": "Кнопка записи",
+      "kind": "button",
+      "refersTo": "rec-button",
+      "description": "Единственный красный элемент.",
+      "html": "<button class=\"ds-rec\">Записать</button>",
+      "css": ".ds-rec{width:88px;height:88px;border-radius:50%;border:0;background:#e0402f;color:#fff;font:700 14px 'Golos Text',system-ui,sans-serif;cursor:pointer;box-shadow:0 0 0 5px #27292d,0 6px 16px rgb(0 0 0/.45);transition:transform 160ms cubic-bezier(.16,1,.3,1),background-color 160ms}.ds-rec:hover{background:#f04e3c}.ds-rec:active{transform:scale(.97)}.ds-rec:focus-visible{outline:2px solid #f2a33a;outline-offset:2px}"
+    },
+    {
+      "name": "Главная клавиша",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Алюминиевая клавиша основного действия области.",
+      "html": "<button class=\"ds-btn-primary\">Сравнить</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;height:38px;padding:0 16px;border-radius:6px;font:600 15px 'Golos Text',system-ui,sans-serif;cursor:pointer;border:1px solid #b3b8be;background:linear-gradient(180deg,#dcdfe3,#b3b8be);color:#17181a}.ds-btn-primary:hover{background:#dcdfe3}.ds-btn-primary:active{transform:translateY(1px)}.ds-btn-primary:focus-visible{outline:2px solid #f2a33a;outline-offset:2px}"
+    },
+    {
+      "name": "Кнопка",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Обычная кнопка на пластике.",
+      "html": "<button class=\"ds-btn\">Повторить</button>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;height:38px;padding:0 16px;border-radius:6px;font:600 15px 'Golos Text',system-ui,sans-serif;cursor:pointer;border:1px solid #34363b;background:#27292d;color:#e8eaed}.ds-btn:hover{background:#303237}.ds-btn:active{transform:translateY(1px)}.ds-btn:focus-visible{outline:2px solid #f2a33a;outline-offset:2px}"
+    },
+    {
+      "name": "Индикатор",
+      "kind": "chip",
+      "refersTo": "meter",
+      "description": "Фильтр-индикатор с малым счётчиком; выбранный получает янтарную рамку.",
+      "html": "<button class=\"ds-meter\" aria-pressed=\"true\"><span>Добавится</span><span class=\"ds-c\">312</span></button>",
+      "css": ".ds-meter{display:flex;align-items:center;justify-content:space-between;gap:12px;width:220px;padding:10px 12px 10px 16px;border-radius:10px;border:1px solid #34363b;background:#1f2023;color:#e8eaed;font:500 15px 'Golos Text',system-ui,sans-serif;cursor:pointer}.ds-meter:hover{border-color:#4a4d53}.ds-meter[aria-pressed=true]{border-color:#f2a33a;background:#29251d}.ds-meter:focus-visible{outline:2px solid #f2a33a;outline-offset:2px}.ds-c{padding:5px 8px;border-radius:6px;background:#0d0e0f;box-shadow:inset 0 2px 5px rgb(0 0 0/.7);color:#f2a33a;font:28px/1 'Share Tech Mono',monospace}"
+    },
+    {
+      "name": "Поле ввода",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Чёрное поле с моноширинным текстом.",
+      "html": "<input class=\"ds-input\" placeholder=\"Вставьте код\">",
+      "css": ".ds-input{height:38px;padding:0 12px;border-radius:6px;border:1px solid #34363b;background:#0d0e0f;color:#e8eaed;font:15px 'Share Tech Mono',monospace}.ds-input::placeholder{color:#7d828a}.ds-input:focus-visible{outline:2px solid #f2a33a;outline-offset:2px}"
+    },
+    {
+      "name": "Вкладка",
+      "kind": "nav",
+      "refersTo": "tab",
+      "description": "Вкладка верхней панели.",
+      "html": "<div class=\"ds-tabs\"><button class=\"ds-tab\" aria-selected=\"true\">Перенос</button><button class=\"ds-tab\">История</button></div>",
+      "css": ".ds-tabs{display:flex;gap:4px}.ds-tab{border:0;background:none;padding:8px 14px;border-radius:6px;color:#a6abb3;font:500 15px 'Golos Text',system-ui,sans-serif;cursor:pointer}.ds-tab:hover{color:#e8eaed}.ds-tab[aria-selected=true]{background:#27292d;color:#e8eaed}.ds-tab:focus-visible{outline:2px solid #f2a33a;outline-offset:2px}"
+    },
+    {
+      "name": "Кандидат",
+      "kind": "card",
+      "refersTo": "candidate",
+      "description": "Вариант совпадения в разборе спорных; выбранный янтарный.",
+      "html": "<label class=\"ds-cand\"><input type=\"radio\" checked><span>Название трека<br><small>Исполнитель</small></span><span class=\"ds-d\">3:42</span></label>",
+      "css": ".ds-cand{display:grid;grid-template-columns:20px 1fr auto;gap:12px;width:360px;padding:12px 14px;border-radius:6px;border:1px solid #f2a33a;background:#2c2820;color:#e8eaed;font:15px 'Golos Text',system-ui,sans-serif;cursor:pointer}.ds-cand input{accent-color:#f2a33a;margin-top:4px}.ds-cand small{color:#a6abb3}.ds-d{font:14px 'Share Tech Mono',monospace;color:#a6abb3}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Двухкассетник",
+    "overview": "Перенос музыки показан как перезапись с деки на деку. Корпус из чёрного пластика, две алюминиевые деки с окнами ленты, по центру переключатель направления и одна красная круглая кнопка записи. Размер библиотеки читается по янтарным цифрам в чёрных окошках и по толщине намотки на катушках.",
+    "keyCharacteristics": [
+      "Тёмная тема, единственная.",
+      "Три материала: пластик, алюминий, чёрное окошко.",
+      "Красный только у записи, янтарь только у цифр и положительных значений, кирпичный только для «не найдено» и ошибок.",
+      "Движение осмысленное: цифры прокатываются, катушки крутятся только пока идёт работа."
+    ],
+    "rules": [
+      {
+        "name": "The One Red Rule",
+        "body": "Красный (rec-red) принадлежит кнопке записи. Больше ничего на экране не красное.",
+        "section": "colors"
+      },
+      {
+        "name": "The Amber Is Digits Rule",
+        "body": "Янтарь означает цифру или положительное значение. Не используйте его для декоративных заливок, заголовков и кнопок.",
+        "section": "colors"
+      },
+      {
+        "name": "The Aluminium Key Rule",
+        "body": "Главное действие области: алюминиевая клавиша. Не красная и не янтарная.",
+        "section": "colors"
+      },
+      {
+        "name": "The Brick Means Missing Rule",
+        "body": "Кирпич только для «не найдено» и ошибок.",
+        "section": "colors"
+      },
+      {
+        "name": "The Mono Is For Counting Rule",
+        "body": "Share Tech Mono только для чисел, кодов и дат. Слова набираются Golos Text.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Rule",
+        "body": "Счётчики используют tabular-nums, чтобы цифры не прыгали.",
+        "section": "typography"
+      },
+      {
+        "name": "The Inset Means Display Rule",
+        "body": "Вдавленная тень (inset) только у окошек, где показывают данные.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do использовать токены из :root в src/web/styles.css; новых цветов без роли не заводите.",
+      "Do оформлять любую новую цифру, которая что-то считает, как окошко-счётчик (чёрное, янтарное, вдавленное).",
+      "Do помечать статусы иконкой и словом вместе с цветом.",
+      "Do писать тексты по-русски на «вы», добавляя строки в src/web/i18n/ru.ts.",
+      "Do крутить катушки только пока идёт работа и уважать prefers-reduced-motion.",
+      "Do оставлять видимым янтарный фокус-контур 2px на всех интерактивных элементах."
+    ],
+    "donts": [
+      "Don't красить в красный ничего, кроме кнопки записи.",
+      "Don't использовать янтарь для заливок, заголовков и обычных кнопок.",
+      "Don't делать главное действие красным или янтарным: это алюминиевая клавиша.",
+      "Don't ставить цвета Яндекса и Spotify на что-либо крупнее точки 10px.",
+      "Don't возвращаться к категорийному степперу и одинаковым карточкам сервисов.",
+      "Don't писать строки интерфейса прямо в компонентах в обход ru.ts."
+    ]
+  }
+}

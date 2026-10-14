@@ -2,3 +2,5 @@ node_modules/
 dist/
 .local/
 probe-report*.txt
+.impeccable/review/
+.impeccable/mocks/
