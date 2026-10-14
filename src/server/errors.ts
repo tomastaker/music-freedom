@@ -15,7 +15,7 @@ const NETWORK_CODES = new Set([
 
 /** Ошибка сервиса словами пользователя: что случилось и что сделать. */
 export function userMessage(error: unknown, service?: ServiceId): string {
-  const name = service ? NAMES[service] : "Сервис";
+  const name = service ? NAMES[service] : error instanceof HttpError ? error.service : "Сервис";
   if (error instanceof DOMException && error.name === "AbortError") return "Остановлено.";
   if (error instanceof RateLimitError) {
     const until = new Date(error.retryAt).toLocaleString("ru-RU", {

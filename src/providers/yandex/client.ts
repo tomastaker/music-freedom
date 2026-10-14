@@ -103,17 +103,25 @@ export class YandexClient {
   constructor(private readonly token: string) {}
 
   private async call<T>(path: string, form?: Record<string, string>): Promise<T> {
-    const res = await fetchIpv4(`${API}${path}`, {
-      method: form ? "POST" : "GET",
-      headers: {
-        Authorization: `OAuth ${this.token}`,
-        "X-Yandex-Music-Client": "YandexMusicAndroid/24023621",
-        "Accept-Language": "ru",
-        ...(form ? FORM : {}),
-      },
-      body: form ? new URLSearchParams(form).toString() : undefined,
-    });
-    return (await readJson<{ result: T }>(SERVICE, res)).result;
+    for (let attempt = 0; ; attempt++) {
+      const res = await fetchIpv4(`${API}${path}`, {
+        method: form ? "POST" : "GET",
+        headers: {
+          Authorization: `OAuth ${this.token}`,
+          "X-Yandex-Music-Client": "YandexMusicAndroid/24023621",
+          "Accept-Language": "ru",
+          ...(form ? FORM : {}),
+        },
+        body: form ? new URLSearchParams(form).toString() : undefined,
+      });
+      // Яндекс тоже ограничивает частоту: короткая пауза с нарастанием, потом понятная ошибка.
+      if (res.status === 429 && attempt < 5) {
+        const retryAfter = Number(res.headers.get("retry-after"));
+        await sleep(Math.min(30, retryAfter > 0 ? retryAfter : 2 ** attempt * 2) * 1000);
+        continue;
+      }
+      return (await readJson<{ result: T }>(SERVICE, res)).result;
+    }
   }
 
   async account(): Promise<{ uid: number; name: string }> {
