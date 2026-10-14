@@ -26,5 +26,7 @@
     "@phosphor-icons/react": "^2.1.10",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
-  }
+  },
+  "license": "MIT",
+  "description": "Sync liked tracks between Yandex Music and Spotify. Runs locally, opens in your browser."
 }

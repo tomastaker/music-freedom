@@ -1,6 +1,7 @@
 import type { MusicService } from "../../core/service";
 import type { Track } from "../../core/track";
 import { fetchIpv4, HttpError, readJson, sleep } from "../../lib/http";
+import { AppError } from "../../shared/errors";
 
 // Неофициальный API. Идентификатор и секрет принадлежат приложению Яндекс Музыки
 // и публично используются всеми клиентскими библиотеками (см. MarshalX/yandex-music-api).
@@ -8,7 +9,7 @@ const CLIENT_ID = "23cabbbdc6cd418abb4b39c32c41195d";
 const CLIENT_SECRET = "53bc75238f0c4d08a118e51fe9203300";
 const OAUTH = "https://oauth.yandex.ru";
 const API = "https://api.music.yandex.net";
-const SERVICE = "Яндекс Музыка";
+const SERVICE = "yandex";
 const FORM = { "Content-Type": "application/x-www-form-urlencoded" };
 
 export type DeviceCode = {
@@ -70,7 +71,7 @@ export async function waitForDeviceToken(code: DeviceCode, signal?: AbortSignal)
       throw new HttpError(SERVICE, res.status, data.error ?? "unknown");
     }
   }
-  throw new Error("Код подтверждения Яндекса истёк. Запустите вход заново.");
+  throw new AppError("yandexCodeExpired", "yandex");
 }
 
 type YandexTrack = {
@@ -128,7 +129,7 @@ export class YandexClient {
     const status = await this.call<{ account: { uid?: number; displayName?: string; login?: string } }>(
       "/account/status",
     );
-    if (!status.account.uid) throw new Error("Яндекс не вернул uid: токен недействителен.");
+    if (!status.account.uid) throw new AppError("authExpired", "yandex");
     return { uid: status.account.uid, name: status.account.displayName ?? status.account.login ?? "" };
   }
 

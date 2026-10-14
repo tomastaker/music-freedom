@@ -4,3 +4,5 @@ dist/
 probe-report*.txt
 .impeccable/review/
 .impeccable/mocks/
+.impeccable/questions/
+.impeccable/decision-*.json

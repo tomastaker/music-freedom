@@ -1,7 +1,7 @@
 import { ArrowCounterClockwise, CheckCircle, DownloadSimple, WarningCircle, X } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
-import type { AppState, PlanItem, ServiceId, ServiceState, TransferMode } from "../shared/api";
-import { api, useAppState, usePlanItems } from "./api";
+import type { AppState, ErrorInfo, PlanItem, ServiceId, ServiceState, TransferMode } from "../shared/api";
+import { api, toInfo, useAppState, usePlanItems } from "./api";
 import { ConnectSpotify } from "./components/ConnectSpotify";
 import { ConnectYandex } from "./components/ConnectYandex";
 import { Deck } from "./components/Deck";
@@ -12,7 +12,7 @@ import { Reel } from "./components/Reel";
 import { Review } from "./components/Review";
 import { TrackTable } from "./components/TrackTable";
 import { Transport } from "./components/Transport";
-import { formatNumber, t, tracks } from "./i18n";
+import { errorText, formatDateTime, formatNumber, LOCALES, setLocale, t, tracks, useLocale } from "./i18n";
 
 type Tab = "transfer" | "history";
 
@@ -36,7 +36,7 @@ function downloadNotFound(items: PlanItem[]) {
   const blob = new Blob([`${lines.join("\n")}\n`], { type: "text/plain;charset=utf-8" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = "music-freedom-не-найдено.txt";
+  link.download = t("report.notFoundFile");
   link.click();
   URL.revokeObjectURL(link.href);
 }
@@ -70,14 +70,19 @@ export function App() {
   const [mode, setMode] = useState<TransferMode>("yandex-spotify");
   const [filter, setFilter] = useState<Filter>("all");
   const [review, setReview] = useState<{ startId?: string } | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<ErrorInfo | null>(null);
+  const locale = useLocale();
   const workspace = useRef<HTMLElement>(null);
 
   // Ошибку входа в Spotify сервер передаёт через адрес после возврата из Spotify.
   useEffect(() => {
     const error = new URLSearchParams(location.search).get("error");
     if (error) {
-      setActionError(error);
+      try {
+        setActionError(JSON.parse(error) as ErrorInfo);
+      } catch {
+        setActionError({ code: "unknown", params: { message: error } });
+      }
       history.replaceState(null, "", "/");
     }
   }, []);
@@ -92,7 +97,7 @@ export function App() {
     try {
       await api.post(path, body);
     } catch (e) {
-      setActionError((e as Error).message);
+      setActionError(toInfo(e));
     }
     refresh();
   };
@@ -164,7 +169,7 @@ export function App() {
     content = (
       <div className="empty">
         <h2>{t("empty.blockedTitle")}</h2>
-        <p>{errorOf(yandex) ?? errorOf(spotify)}</p>
+        <p>{errorText(errorOf(yandex) ?? errorOf(spotify) ?? { code: "unknown", params: { message: "" } })}</p>
       </div>
     );
   } else {
@@ -199,6 +204,21 @@ export function App() {
             </button>
           ))}
         </div>
+        <fieldset className="language">
+          <legend className="visually-hidden">{t("app.language")}</legend>
+          {LOCALES.map((value) => (
+            <label key={value} className="language-option">
+              <input
+                type="radio"
+                name="language"
+                className="visually-hidden"
+                checked={locale === value}
+                onChange={() => setLocale(value)}
+              />
+              {value.toUpperCase()}
+            </label>
+          ))}
+        </fieldset>
       </header>
 
       <div className="console">
@@ -206,7 +226,7 @@ export function App() {
           service="yandex"
           state={yandex}
           role={roleOf("yandex", mode)}
-          letter="А"
+          letter={t("deck.letterA")}
           pack={likesOf(yandex) / biggest}
           running={deckRunning("yandex", job)}
           onConnect={focusWorkspace}
@@ -238,7 +258,7 @@ export function App() {
           service="spotify"
           state={spotify}
           role={roleOf("spotify", mode)}
-          letter="Б"
+          letter={t("deck.letterB")}
           pack={likesOf(spotify) / biggest}
           running={deckRunning("spotify", job)}
           onConnect={focusWorkspace}
@@ -259,17 +279,14 @@ export function App() {
               if (state.jobError) act("/api/job/dismiss-error");
             }}
           >
-            {actionError ?? state.jobError}
+            {errorText((actionError ?? state.jobError) as ErrorInfo)}
           </Banner>
         )}
         {compared && state.plan?.limitedUntil && (summary?.unchecked ?? 0) > 0 && !job && tab === "transfer" && (
           <Banner tone="error">
             {t("limited.text", {
-              until: new Date(state.plan.limitedUntil).toLocaleString("ru-RU", {
-                weekday: "short",
-                hour: "2-digit",
-                minute: "2-digit",
-              }),
+              service: t("service.spotify"),
+              until: formatDateTime(state.plan.limitedUntil),
               count: tracks(summary?.unchecked ?? 0),
             })}
           </Banner>

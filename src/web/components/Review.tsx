@@ -1,8 +1,8 @@
 import { ArrowLeft, ArrowSquareOut, Check } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
-import type { PlanItem, Track } from "../../shared/api";
-import { api } from "../api";
-import { t } from "../i18n";
+import type { ErrorInfo, PlanItem, Track } from "../../shared/api";
+import { api, toInfo } from "../api";
+import { errorText, t } from "../i18n";
 import { duration, fullTitle, trackUrl } from "./format";
 
 type Props = {
@@ -28,7 +28,7 @@ export function Review({ items, startId, onClose, onDecided }: Props) {
   const item = queue[position];
   const choices = item ? options(item) : [];
   const [selected, setSelected] = useState<string | undefined>(choices[0]?.id);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ErrorInfo | null>(null);
 
   useEffect(() => {
     setSelected(item ? options(item)[0]?.id : undefined);
@@ -43,7 +43,7 @@ export function Review({ items, startId, onClose, onDecided }: Props) {
       if (position + 1 < queue.length) setPosition(position + 1);
       else onClose();
     } catch (e) {
-      setError((e as Error).message);
+      setError(toInfo(e));
     }
   };
 
@@ -131,7 +131,7 @@ export function Review({ items, startId, onClose, onDecided }: Props) {
         )}
         {error && (
           <p className="field-error" role="alert">
-            {error}
+            {errorText(error)}
           </p>
         )}
         <div className="review-actions">

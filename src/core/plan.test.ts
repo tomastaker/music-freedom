@@ -150,7 +150,7 @@ describe("buildPlan", () => {
     const spotify: MusicService = {
       ...fakeService("spotify", [], []),
       async findCandidates(source) {
-        if (++searches > 1) throw new RateLimitError("Spotify", Date.now() + 82_000_000);
+        if (++searches > 1) throw new RateLimitError("spotify", Date.now() + 82_000_000);
         return [track("spotify", "s1", source.title, "A")];
       },
     };

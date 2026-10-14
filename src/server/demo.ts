@@ -19,18 +19,18 @@ const SHARED: Seed[] = [
   ["Rolling in the Deep", "Adele", 228],
 ];
 const ONLY_YANDEX: Seed[] = [
-  ["Плот", "Юрий Лоза", 254],
-  ["Кукла колдуна", "Король и Шут", 203],
-  ["Восьмиклассница", "Кино", 213],
-  ["Ветер", "Ария", 341],
-  ["Танцевать", "Мураками", 210],
-  ["Батарейка", "Жуки", 263],
   ["Everlong", "Foo Fighters", 250],
   ["Seven Nation Army", "The White Stripes", 232],
   ["Do I Wanna Know?", "Arctic Monkeys", 272],
   ["Mr. Brightside", "The Killers", 222],
-  ["Песня о самом себе", "Местный исполнитель", 199],
   ["Back in Black", "AC/DC", 255],
+  ["Танцевать", "Мураками", 210],
+  ["Кукла колдуна", "Король и Шут", 203],
+  ["Восьмиклассница", "Кино", 213],
+  ["Ветер", "Ария", 341],
+  ["Плот", "Юрий Лоза", 254],
+  ["Батарейка", "Жуки", 263],
+  ["Песня о самом себе", "Местный исполнитель", 199],
 ];
 const ONLY_SPOTIFY: Seed[] = [
   ["Blinding Lights", "The Weeknd", 200],
@@ -76,7 +76,7 @@ class DemoService implements MusicService {
     await sleep(90);
     // MF_DEMO_LIMIT=1: Spotify «ограничивает» поиск после пяти запросов, как настоящий на сутки.
     if (process.env.MF_DEMO_LIMIT && this.id === "spotify" && ++this.searches > 5) {
-      throw new RateLimitError("Spotify", Date.now() + 22 * 60 * 60 * 1000);
+      throw new RateLimitError("spotify", Date.now() + 22 * 60 * 60 * 1000);
     }
     const word = source.title.toLowerCase().split(" ")[0] ?? "";
     return this.catalog.filter((t) => t.title.toLowerCase().includes(word));
@@ -99,16 +99,16 @@ class DemoService implements MusicService {
 export function demoServices(): Record<ServiceId, MusicService> {
   const yandexLikes = [...SHARED, ...ONLY_YANDEX].map((s, i) => toTrack("yandex", s, i));
   const spotifyLikes = [...SHARED, ...ONLY_SPOTIFY].map((s, i) => toTrack("spotify", s, i));
-  // Каталоги: почти всё находится; «Танцевать» нашлась только в концертной версии, а пара треков отсутствует.
+  // Каталоги: почти всё находится; «Everlong» нашёлся с другой длительностью, а пара треков отсутствует.
   const spotifyCatalog = ONLY_YANDEX.filter(([title]) => title !== "Песня о самом себе").map((s, i) => {
     const track = toTrack("spotify", s, 100 + i);
-    return s[0] === "Танцевать" ? { ...track, durationMs: track.durationMs + 9000 } : track;
+    return s[0] === "Everlong" ? { ...track, durationMs: track.durationMs + 9000 } : track;
   });
   const yandexCatalog = ONLY_SPOTIFY.filter(([title]) => title !== "Песня без каталога").map((s, i) =>
     toTrack("yandex", s, 100 + i),
   );
   return {
-    yandex: new DemoService("yandex", "Демо-аккаунт Яндекса", yandexLikes, yandexCatalog),
-    spotify: new DemoService("spotify", "Демо-аккаунт Spotify", spotifyLikes, spotifyCatalog),
+    yandex: new DemoService("yandex", "Demo account", yandexLikes, yandexCatalog),
+    spotify: new DemoService("spotify", "Demo account", spotifyLikes, spotifyCatalog),
   };
 }

@@ -29,7 +29,7 @@ await $`rm -rf dist/app && mkdir -p dist/app`;
 for (const [target, name, ext] of targets) {
   const outfile = `dist/app/${name}/${name}${ext}`;
   await $`bun build src/server/main.ts --compile --minify --sourcemap=none --target=${target} --define process.env.NODE_ENV='"production"' --outfile ${outfile}`;
-  await $`cp README.md dist/app/${name}/`;
+  await $`cp README.md README.ru.md LICENSE THIRD_PARTY_NOTICES.md dist/app/${name}/`;
   // zip сохраняет право на запуск: на macOS и Linux файл открывается сразу после распаковки.
   await $`cd dist/app && python3 -I -c ${ZIP} ${name}`;
   console.log(`готово: dist/app/${name}.zip`);

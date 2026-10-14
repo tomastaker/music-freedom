@@ -103,4 +103,32 @@ describe("запись и отмена", () => {
     await settle(app);
     expect(spotify.likes).toHaveLength(0);
   });
+
+  test("пачка, которую сервис применил, но ответ потерялся, всё равно попадает в журнал отмены", async () => {
+    const titles = ["Первая", "Вторая"];
+    const yandex = memoryService(
+      "yandex",
+      titles.map((t, i) => track("yandex", `y${i}`, t)),
+      [],
+    );
+    const spotify = memoryService(
+      "spotify",
+      [],
+      titles.map((t, i) => track("spotify", `s${i}`, t)),
+    );
+    spotify.addLikes = async function (tracks) {
+      for (const t of tracks) this.likes.unshift(t);
+      throw Object.assign(new Error("timeout"), { code: "ETIMEDOUT" });
+    };
+    const app = new App(new Store(":memory:"));
+    await app.startDemo({ yandex, spotify });
+    app.startPlan("yandex-spotify");
+    await settle(app);
+    app.startApply();
+    for (let i = 0; i < 200 && app.state().job; i++) await sleep(5);
+    expect(app.state().jobError?.code).toBe("network");
+    app.startUndo(app.state().lastRun?.id ?? 0);
+    await settle(app);
+    expect(spotify.likes).toHaveLength(0);
+  });
 });

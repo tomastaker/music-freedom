@@ -50,7 +50,7 @@ export function fetchIpv4(
       res.on("error", reject);
     });
     req.on("error", reject);
-    req.setTimeout(30_000, () => req.destroy(new Error("Таймаут запроса")));
+    req.setTimeout(30_000, () => req.destroy(Object.assign(new Error("Request timeout"), { code: "ETIMEDOUT" })));
     if (init.body) req.write(init.body);
     req.end();
   });

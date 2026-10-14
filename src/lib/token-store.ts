@@ -1,4 +1,4 @@
-import { chmod, mkdir } from "node:fs/promises";
+import { chmod, mkdir, rename } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -12,13 +12,22 @@ export type StoredTokens = {
 
 export async function loadTokens(): Promise<StoredTokens> {
   const file = Bun.file(tokensFile);
-  return (await file.exists()) ? ((await file.json()) as StoredTokens) : {};
+  if (!(await file.exists())) return {};
+  try {
+    return (await file.json()) as StoredTokens;
+  } catch {
+    // Повреждённый файл не должен ронять программу при каждом запуске: просто войдём заново.
+    return {};
+  }
 }
 
 export async function saveTokens(tokens: StoredTokens): Promise<void> {
   await mkdir(appDataDir, { recursive: true, mode: 0o700 });
-  await Bun.write(tokensFile, JSON.stringify(tokens, null, 2));
-  await chmod(tokensFile, 0o600);
+  // Атомарно: временный файл и переименование, чтобы обрыв записи не оставил обрезанный JSON.
+  const temporary = `${tokensFile}.tmp`;
+  await Bun.write(temporary, JSON.stringify(tokens, null, 2));
+  await chmod(temporary, 0o600);
+  await rename(temporary, tokensFile);
 }
 
 let queue: Promise<unknown> = Promise.resolve();

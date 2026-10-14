@@ -1,7 +1,7 @@
 import type { ServiceId } from "../core/track";
 import { HttpError, RateLimitError } from "../lib/http";
+import { AppError, type ErrorInfo } from "../shared/errors";
 
-const NAMES: Record<ServiceId, string> = { yandex: "Яндекс Музыка", spotify: "Spotify" };
 const NETWORK_CODES = new Set([
   "ECONNRESET",
   "ECONNREFUSED",
@@ -11,42 +11,33 @@ const NETWORK_CODES = new Set([
   "ENOTFOUND",
   "EAI_AGAIN",
   "UNKNOWN_CERTIFICATE_VERIFICATION_ERROR",
+  "TimeoutError",
 ]);
 
-/** Ошибка сервиса словами пользователя: что случилось и что сделать. */
-export function userMessage(error: unknown, service?: ServiceId): string {
-  const name = service ? NAMES[service] : error instanceof HttpError ? error.service : "Сервис";
-  if (error instanceof DOMException && error.name === "AbortError") return "Остановлено.";
+const asService = (value: string | undefined): ServiceId | undefined =>
+  value === "yandex" || value === "spotify" ? value : undefined;
+
+/** Исключение в код для интерфейса: что случилось и с каким сервисом. Текст собирает словарь интерфейса. */
+export function toErrorInfo(error: unknown, service?: ServiceId): ErrorInfo {
+  if (error instanceof AppError) return { code: error.code, service: error.service ?? service, params: error.params };
+  if (error instanceof DOMException && error.name === "AbortError") return { code: "stopped" };
   if (error instanceof RateLimitError) {
-    const until = new Date(error.retryAt).toLocaleString("ru-RU", {
-      weekday: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-    return `${error.service} ограничил запросы вашего приложения до ${until}. Всё найденное сохранено: после этого времени нажмите «Сравнить», и поиск продолжится с того же места.`;
+    return { code: "rateLimited", service: asService(error.service) ?? service, params: { until: error.retryAt } };
   }
   if (error instanceof HttpError) {
-    if (error.status === 401) return `Вход в ${name} устарел. Отключите сервис и подключите заново.`;
-    if (error.body.includes("unavailable in this country")) {
-      return `${name} недоступен из вашей страны. Включите VPN и нажмите «Повторить».`;
-    }
-    if (error.status === 403 && /scope/i.test(error.body)) {
-      return `У программы нет права на это действие в ${name}. Отключите сервис и войдите заново.`;
-    }
-    if (error.status === 429) return `${name} просит сделать паузу. Подождите минуту и повторите.`;
-    if (error.status === 403 && service === "spotify") {
-      return "Spotify отказал в доступе. Проверьте, что у владельца приложения в Spotify Dashboard есть Premium.";
-    }
-    if (error.status === 451)
-      return `${name} недоступен из вашей страны. Попробуйте включить или выключить VPN и нажмите «Повторить».`;
-    if (error.status >= 500) return `${name} временно не работает (ошибка ${error.status}). Попробуйте позже.`;
-    return `${name} ответил ошибкой ${error.status}.`;
+    const who = service ?? asService(error.service);
+    if (error.status === 401) return { code: "authExpired", service: who };
+    if (error.body.includes("unavailable in this country") || error.status === 451)
+      return { code: "geoBlocked", service: who };
+    if (error.status === 403 && /scope/i.test(error.body)) return { code: "noScopeForAction", service: who };
+    if (error.status === 429) return { code: "slowDown", service: who };
+    if (error.status === 403 && who === "spotify") return { code: "spotifyForbidden", service: who };
+    if (error.status >= 500) return { code: "serviceDown", service: who, params: { status: error.status } };
+    return { code: "serviceError", service: who, params: { status: error.status } };
   }
-  const code = (error as { code?: string } | null)?.code;
-  if (code && NETWORK_CODES.has(code)) {
-    return `${name} не отвечает. Проверьте интернет; если включён VPN, попробуйте другой сервер. Затем нажмите «Повторить».`;
-  }
-  return error instanceof Error ? error.message : String(error);
+  const code = (error as { code?: string; name?: string } | null)?.code ?? (error as { name?: string })?.name;
+  if (code && NETWORK_CODES.has(code)) return { code: "network", service };
+  return { code: "unknown", service, params: { message: error instanceof Error ? error.message : String(error) } };
 }
 
 /** Вход больше недействителен: нужно подключаться заново, повтор не поможет. */

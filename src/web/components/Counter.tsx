@@ -1,3 +1,5 @@
+import { t } from "../i18n";
+
 const DIGITS = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
 
 type Props = {
@@ -17,7 +19,7 @@ export function Counter({ value, digits = 4, tone = "amber", small, label }: Pro
       className={`counter${small ? " counter-small" : ""}`}
       data-tone={value === null ? "off" : tone}
       role="img"
-      aria-label={label ?? (value === null ? "нет данных" : String(value))}
+      aria-label={label ?? (value === null ? t("app.noData") : String(value))}
     >
       {[...text].map((char, index) => (
         // Разряды стабильны по позиции: ключ по индексу здесь и нужен, чтобы барабан крутился, а не пересоздавался.

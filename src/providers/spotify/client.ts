@@ -6,7 +6,7 @@ import { openBrowser } from "../../lib/open-browser";
 
 const ACCOUNTS = "https://accounts.spotify.com";
 const API = "https://api.spotify.com/v1";
-const SERVICE = "Spotify";
+const SERVICE = "spotify";
 /**
  * Документация Spotify обещает, что loopback-адрес можно зарегистрировать без порта, но на практике
  * авторизация отвечает «redirect_uri: Not matching configuration». Поэтому порт фиксированный и редкий.
@@ -56,6 +56,7 @@ export async function createPkceRequest(clientId: string, scopes: string[]): Pro
 export async function exchangeCode(clientId: string, code: string, verifier: string): Promise<SpotifyTokens> {
   const res = await fetch(`${ACCOUNTS}/api/token`, {
     method: "POST",
+    signal: AbortSignal.timeout(30_000),
     body: new URLSearchParams({
       grant_type: "authorization_code",
       code,
@@ -107,6 +108,7 @@ export async function loginWithPkce(clientId: string, scopes: string[], onUrl: (
 export async function refreshTokens(clientId: string, tokens: SpotifyTokens): Promise<SpotifyTokens> {
   const res = await fetch(`${ACCOUNTS}/api/token`, {
     method: "POST",
+    signal: AbortSignal.timeout(30_000),
     body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: tokens.refreshToken, client_id: clientId }),
   });
   return toTokens(await readJson<TokenResponse>(SERVICE, res), tokens);

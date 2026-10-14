@@ -1,13 +1,13 @@
 import { ArrowSquareOut, Check, Copy, SignIn } from "@phosphor-icons/react";
 import { type FormEvent, useState } from "react";
-import type { SpotifyState } from "../../shared/api";
-import { api } from "../api";
-import { t } from "../i18n";
+import type { ErrorInfo, SpotifyState } from "../../shared/api";
+import { api, toInfo } from "../api";
+import { errorText, t } from "../i18n";
 
 export function ConnectSpotify({ state, onChange }: { state: SpotifyState; onChange: () => void }) {
   const [editing, setEditing] = useState(!state.clientId);
   const [clientId, setClientId] = useState(state.clientId ?? "");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ErrorInfo | null>(null);
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
@@ -24,7 +24,7 @@ export function ConnectSpotify({ state, onChange }: { state: SpotifyState; onCha
       setEditing(false);
       onChange();
     } catch (e) {
-      setError((e as Error).message);
+      setError(toInfo(e));
     }
   };
 
@@ -88,7 +88,7 @@ export function ConnectSpotify({ state, onChange }: { state: SpotifyState; onCha
                 </div>
                 {error && (
                   <p id="client-id-error" className="field-error" role="alert">
-                    {error}
+                    {errorText(error)}
                   </p>
                 )}
               </div>
@@ -111,7 +111,7 @@ export function ConnectSpotify({ state, onChange }: { state: SpotifyState; onCha
       )}
       {serviceError && (
         <p className="field-error" role="alert">
-          {serviceError}
+          {errorText(serviceError)}
         </p>
       )}
     </div>

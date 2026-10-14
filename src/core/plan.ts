@@ -1,4 +1,5 @@
 import { RateLimitError } from "../lib/http";
+import { AppError } from "../shared/errors";
 import { bestMatch, LibraryIndex, type MatchLevel } from "./match";
 import type { MusicService } from "./service";
 import type { ServiceId, Track } from "./track";
@@ -57,7 +58,7 @@ export type Services = Partial<Record<ServiceId, MusicService>>;
 
 function service(services: Services, id: ServiceId): MusicService {
   const found = services[id];
-  if (!found) throw new Error(`Сервис ${id} не подключён`);
+  if (!found) throw new AppError("notConnected", id);
   return found;
 }
 
@@ -148,16 +149,16 @@ export async function buildPlan(options: {
 /** Решение пользователя по спорному или ненайденному треку: выбрать кандидата или пропустить. */
 export function decide(plan: Plan, itemId: string, choice: { trackId: string } | "skip"): PlanItem {
   const item = plan.items.find((i) => i.id === itemId);
-  if (!item) throw new Error("Трек не найден в плане");
+  if (!item) throw new AppError("noSuchCandidate");
   if (item.status !== "review" && item.status !== "notFound") {
-    throw new Error("Решение нужно только для спорных и ненайденных треков");
+    throw new AppError("decisionNotNeeded");
   }
   if (choice === "skip") {
     item.decision = "skipped";
     return item;
   }
   const picked = [item.match, ...(item.candidates ?? [])].find((t) => t?.id === choice.trackId);
-  if (!picked) throw new Error("Такого варианта нет среди кандидатов");
+  if (!picked) throw new AppError("noSuchCandidate");
   item.match = picked;
   // Статус не меняем: выбор можно пересмотреть, а повторы и уже лайкнутое отсеет tracksToAdd.
   item.decision = "accepted";

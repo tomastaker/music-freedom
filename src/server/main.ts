@@ -1,11 +1,12 @@
 import { openBrowser } from "../lib/open-browser";
 import { CALLBACK_PORT } from "../providers/spotify/client";
 import type { ServiceId, TransferMode } from "../shared/api";
+import { AppError, type ErrorInfo } from "../shared/errors";
 import index from "../web/index.html";
 import { App } from "./app";
 import { Store } from "./db";
 import { demoServices } from "./demo";
-import { userMessage } from "./errors";
+import { toErrorInfo } from "./errors";
 
 // Интерфейс и callback Spotify живут на одном адресе, который пользователь регистрирует в Spotify Dashboard.
 const PORT = CALLBACK_PORT;
@@ -26,7 +27,7 @@ function guard(handler: Handler, write = false): Handler {
   return (req) => {
     if (!ALLOWED_HOSTS.has(req.headers.get("host") ?? "")) return new Response("Forbidden", { status: 403 });
     if (write && !ALLOWED_ORIGINS.has(req.headers.get("origin") ?? "")) {
-      return json({ error: "Запрос пришёл не со страницы music-freedom." }, 403);
+      return json({ error: { code: "foreignOrigin" } satisfies ErrorInfo }, 403);
     }
     return handler(req);
   };
@@ -38,13 +39,13 @@ function handle(work: (req: Request) => Promise<unknown> | unknown): Handler {
     try {
       return json((await work(req)) ?? { ok: true });
     } catch (error) {
-      return json({ error: userMessage(error) }, 400);
+      return json({ error: toErrorInfo(error) }, 400);
     }
   }, true);
 }
 
 async function body<T>(req: Request): Promise<T> {
-  if (!req.headers.get("content-type")?.startsWith("application/json")) throw new Error("Ожидался JSON");
+  if (!req.headers.get("content-type")?.startsWith("application/json")) throw new AppError("badRequest");
   return (await req.json()) as T;
 }
 
@@ -52,8 +53,8 @@ function isService(value: string): value is ServiceId {
   return value === "yandex" || value === "spotify";
 }
 
-function callbackPage(message: string | null): Response {
-  const target = message ? `/?error=${encodeURIComponent(message)}` : "/";
+function callbackPage(error: ErrorInfo | null): Response {
+  const target = error ? `/?error=${encodeURIComponent(JSON.stringify(error))}` : "/";
   return new Response(null, { status: 302, headers: { Location: target } });
 }
 
@@ -69,7 +70,7 @@ async function alreadyRunning(): Promise<boolean> {
 
 async function main() {
   if (await alreadyRunning()) {
-    console.log(`music-freedom уже запущено: ${URL_BASE}`);
+    console.log(`music-freedom is already running / уже запущено: ${URL_BASE}`);
     openBrowser(URL_BASE);
     return;
   }
@@ -99,7 +100,7 @@ async function main() {
             try {
               return Response.redirect(await app.spotifyAuthUrl(), 302);
             } catch (error) {
-              return callbackPage(userMessage(error, "spotify"));
+              return callbackPage(toErrorInfo(error, "spotify"));
             }
           }),
         },
@@ -109,21 +110,21 @@ async function main() {
               await app.finishSpotifyLogin(new URL(req.url).searchParams);
               return callbackPage(null);
             } catch (error) {
-              return callbackPage(userMessage(error, "spotify"));
+              return callbackPage(toErrorInfo(error, "spotify"));
             }
           }),
         },
         "/api/services/:id/disconnect": {
           POST: handle((req) => {
             const id = (req as Request & { params: { id: string } }).params.id;
-            if (!isService(id)) throw new Error("Неизвестный сервис");
+            if (!isService(id)) throw new AppError("badRequest");
             return app.disconnect(id);
           }),
         },
         "/api/services/:id/retry": {
           POST: handle((req) => {
             const id = (req as Request & { params: { id: string } }).params.id;
-            if (!isService(id)) throw new Error("Неизвестный сервис");
+            if (!isService(id)) throw new AppError("badRequest");
             return app.retry(id);
           }),
         },
@@ -145,18 +146,36 @@ async function main() {
       },
       fetch: () => new Response("Не найдено", { status: 404 }),
     });
-  } catch {
-    // Порт занят: скорее всего, приложение уже запущено. Открываем его вкладку и выходим.
-    console.log(`music-freedom уже запущено: ${URL_BASE}`);
-    openBrowser(URL_BASE);
+  } catch (error) {
+    // Нашей копии на порту нет (проверили выше): его заняла другая программа или система.
+    fail(
+      `Port ${PORT} is used by another program. Close it and start music-freedom again.\n` +
+        `Порт ${PORT} занят другой программой. Закройте её и запустите music-freedom снова.`,
+      error,
+    );
     return;
   }
 
-  console.log(`music-freedom работает: ${server.url}`);
-  console.log("Не закрывайте это окно, пока пользуетесь программой.");
+  console.log(`music-freedom is running / работает: ${server.url}`);
+  console.log("Keep this window open while you use the app. / Не закрывайте это окно, пока пользуетесь программой.");
   if (!process.env.MF_NO_OPEN) openBrowser(URL_BASE);
   if (demo) await app.startDemo(demoServices());
   else await app.start();
 }
 
-await main();
+/**
+ * Фатальная ошибка при запуске. На Windows окно консоли закрывается сразу после выхода,
+ * поэтому ждём Enter: иначе пользователь не увидит, что случилось.
+ */
+function fail(message: string, error?: unknown): void {
+  console.error(`\n${message}`);
+  if (error) console.error(`\n${error instanceof Error ? error.message : String(error)}`);
+  prompt("\nPress Enter to close / Нажмите Enter, чтобы закрыть");
+  process.exit(1);
+}
+
+try {
+  await main();
+} catch (error) {
+  fail("music-freedom could not start. / music-freedom не смогла запуститься.", error);
+}

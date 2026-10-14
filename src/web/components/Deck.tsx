@@ -1,5 +1,5 @@
 import type { ServiceId, ServiceState } from "../../shared/api";
-import { t } from "../i18n";
+import { errorText, t } from "../i18n";
 import { Counter } from "./Counter";
 import { Reel } from "./Reel";
 
@@ -51,7 +51,7 @@ export function Deck({ service, state, role, letter, pack, running, onConnect, o
       </div>
       {error && (
         <p className="deck-error" role="alert">
-          {error}
+          {errorText(error)}
         </p>
       )}
       <div className="deck-foot">

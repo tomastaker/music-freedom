@@ -1,12 +1,12 @@
 import { ArrowSquareOut } from "@phosphor-icons/react";
 import { useState } from "react";
-import type { YandexState } from "../../shared/api";
-import { api } from "../api";
-import { t } from "../i18n";
+import type { ErrorInfo, YandexState } from "../../shared/api";
+import { api, toInfo } from "../api";
+import { errorText, t } from "../i18n";
 import { Reel } from "./Reel";
 
 export function ConnectYandex({ state, onChange }: { state: YandexState; onChange: () => void }) {
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ErrorInfo | null>(null);
   const [busy, setBusy] = useState(false);
   const code = state.pendingCode;
 
@@ -16,7 +16,7 @@ export function ConnectYandex({ state, onChange }: { state: YandexState; onChang
     try {
       await api.post("/api/yandex/login");
     } catch (e) {
-      setError((e as Error).message);
+      setError(toInfo(e));
     } finally {
       setBusy(false);
       onChange();
@@ -28,6 +28,7 @@ export function ConnectYandex({ state, onChange }: { state: YandexState; onChang
     onChange();
   };
 
+  const shown = error ?? (state.status === "disconnected" ? state.error : undefined);
   const minutes = code ? Math.max(1, Math.round((code.expiresAt - Date.now()) / 60000)) : 0;
 
   return (
@@ -65,9 +66,9 @@ export function ConnectYandex({ state, onChange }: { state: YandexState; onChang
           </div>
         </>
       )}
-      {(error ?? (state.status === "disconnected" ? state.error : undefined)) && (
+      {shown && (
         <p className="field-error" role="alert">
-          {error ?? (state.status === "disconnected" ? state.error : "")}
+          {errorText(shown)}
         </p>
       )}
     </div>

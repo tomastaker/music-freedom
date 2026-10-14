@@ -1,7 +1,9 @@
-/** Все тексты интерфейса. Английский перевод повторит эту структуру. */
+/** Тексты интерфейса на русском. Английский словарь (en.ts) повторяет эту структуру. */
 export const ru = {
   app: {
     title: "music-freedom",
+    language: "Язык",
+    noData: "нет данных",
     tabTransfer: "Перенос",
     tabHistory: "История",
     footer: "Работает на вашем компьютере. Токены и библиотека никуда не отправляются.",
@@ -21,6 +23,8 @@ export const ru = {
     target: "запись",
     both: "синхронизация",
     plate: "Дека {letter} · {role}",
+    letterA: "А",
+    letterB: "Б",
   },
   mode: {
     label: "Направление",
@@ -120,7 +124,7 @@ export const ru = {
     done: "Все спорные разобраны.",
   },
   limited: {
-    text: "Spotify ограничил поиск до {until}. Не проверено: {count}. Найденное уже можно записать, а непроверенные досравнить после этого времени: уже найденное повторно искаться не будет.",
+    text: "{service} ограничил поиск до {until}. Не проверено: {count}. Найденное уже можно записать, а непроверенные досравнить после этого времени: уже найденное повторно искаться не будет.",
   },
   report: {
     added: "Записано: {list}",
@@ -129,6 +133,7 @@ export const ru = {
     confirmUndo: "Убрать из избранного треки, которые добавил этот перенос?",
     undone: "Перенос отменён: добавленные треки убраны.",
     notFoundList: "Список ненайденных",
+    notFoundFile: "music-freedom-не-найдено.txt",
   },
   history: {
     title: "История переносов",
@@ -136,16 +141,50 @@ export const ru = {
     undo: "Отменить",
     undone: "Отменён",
     added: "Добавлено",
-    unchecked: "не проверен",
-    uncheckedTab: "Не проверено",
   },
   error: {
     dismiss: "Закрыть",
     network: "Программа не отвечает. Проверьте, что окно music-freedom не закрыто.",
   },
+  errors: {
+    busy: "Дождитесь окончания текущей операции.",
+    badClientId: "Client ID выглядит иначе: это 32 символа из цифр и букв a–f со страницы приложения.",
+    noClientId: "Сначала укажите Client ID.",
+    loginStale: "Ссылка входа устарела. Нажмите «Войти через Spotify» ещё раз.",
+    loginCancelled: "Вы отменили вход в Spotify.",
+    loginRejected: "Spotify не пустил: {reason}.",
+    missingScope: "Войдите в {service} ещё раз: программе нужно право добавлять треки.",
+    spotifyForbidden:
+      "Spotify отказал в доступе. Проверьте, что у владельца приложения в Spotify Dashboard есть Premium.",
+    notConnected: "{service} не подключён.",
+    needBoth: "Сначала подключите оба сервиса.",
+    needCompare: "Сначала сравните библиотеки.",
+    noRun: "Такого переноса нет.",
+    runUndone: "Этот перенос уже отменён.",
+    undoNeedsService: "Подключите {service}, чтобы отменить перенос в него.",
+    badRequest: "Некорректный запрос.",
+    foreignOrigin: "Запрос пришёл не со страницы music-freedom.",
+    yandexCodeExpired: "Код подтверждения Яндекса истёк. Получите новый.",
+    decisionNotNeeded: "Решение нужно только для спорных и ненайденных треков.",
+    noSuchCandidate: "Такого варианта нет среди кандидатов.",
+    rateLimited:
+      "{service} ограничил запросы вашего приложения до {until}. Всё найденное сохранено: после этого времени нажмите «Сравнить», и поиск продолжится с того же места.",
+    authExpired: "Вход в {service} устарел. Отключите сервис и подключите заново.",
+    geoBlocked: "{service} недоступен из вашей страны. Включите или выключите VPN и нажмите «Повторить».",
+    noScopeForAction: "У программы нет права на это действие в {service}. Отключите сервис и войдите заново.",
+    slowDown: "{service} просит сделать паузу. Подождите минуту и повторите.",
+    serviceDown: "{service} временно не работает (ошибка {status}). Попробуйте позже.",
+    serviceError: "{service} ответил ошибкой {status}.",
+    network:
+      "{service} не отвечает. Проверьте интернет; если включён VPN, попробуйте другой сервер. Затем нажмите «Повторить».",
+    stopped: "Остановлено.",
+    unknown: "Что-то пошло не так: {message}",
+    someService: "Сервис",
+  },
   plural: {
-    track: ["трек", "трека", "треков"],
+    track: { one: "трек", few: "трека", many: "треков", other: "трека" },
   },
 } as const;
 
-export type Dictionary = typeof ru;
+type Widen<T> = { [K in keyof T]: T[K] extends string ? string : Widen<T[K]> };
+export type Dictionary = Widen<typeof ru>;

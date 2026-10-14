@@ -2,9 +2,7 @@ import { ArrowCounterClockwise } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import type { RunInfo, ServiceId } from "../../shared/api";
 import { api } from "../api";
-import { t, tracks } from "../i18n";
-
-const dateFormat = new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium", timeStyle: "short" });
+import { formatDateTime, t, tracks } from "../i18n";
 
 export function addedText(added: Partial<Record<ServiceId, number>>): string {
   return (Object.entries(added) as [ServiceId, number][])
@@ -33,7 +31,7 @@ export function History({ busy, onUndo }: { busy: boolean; onUndo: (id: number) 
     <div className="history">
       {runs.map((run) => (
         <div className="history-row" key={run.id}>
-          <span className="history-date">{dateFormat.format(run.createdAt)}</span>
+          <span className="history-date">{formatDateTime(run.createdAt, "full")}</span>
           <span>{addedText(run.added)}</span>
           {run.undoneAt ? (
             <span className="muted">{t("history.undone")}</span>

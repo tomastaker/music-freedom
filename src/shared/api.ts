@@ -1,15 +1,16 @@
 import type { PlanItem, PlanSummary } from "../core/plan";
 import type { ServiceId, Track } from "../core/track";
+import type { ErrorInfo } from "./errors";
 
-export type { PlanItem, PlanSummary, ServiceId, Track };
+export type { ErrorInfo, PlanItem, PlanSummary, ServiceId, Track };
 
 /** Направление переноса: в одну сторону или синхронизация в обе. */
 export type TransferMode = "yandex-spotify" | "spotify-yandex" | "both";
 
 export type ServiceState =
-  | { status: "disconnected"; error?: string }
+  | { status: "disconnected"; error?: ErrorInfo }
   | { status: "connecting" }
-  | { status: "connected"; account: string; likes: number | null; error?: string };
+  | { status: "connected"; account: string; likes: number | null; error?: ErrorInfo };
 
 export type YandexState = ServiceState & {
   /** Код для ya.ru/device, пока пользователь не подтвердил вход. */
@@ -41,7 +42,7 @@ export type AppState = {
   services: { yandex: YandexState; spotify: SpotifyState };
   job: JobState | null;
   /** Последняя ошибка фоновой задачи, пока пользователь её не закрыл. */
-  jobError: string | null;
+  jobError: ErrorInfo | null;
   plan: {
     mode: TransferMode;
     version: number;

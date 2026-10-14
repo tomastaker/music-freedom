@@ -1,12 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { AppState, PlanItem, RunInfo } from "../shared/api";
+import type { AppState, ErrorInfo, PlanItem, RunInfo } from "../shared/api";
+
+/** Ошибка API с кодом: текст на нужном языке собирает errorText. */
+export class ApiError extends Error {
+  constructor(readonly info: ErrorInfo) {
+    super(info.code);
+  }
+}
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, init);
-  const data = (await res.json()) as T & { error?: string };
-  if (!res.ok) throw new Error(data.error ?? `Ошибка ${res.status}`);
+  const data = (await res.json()) as T & { error?: ErrorInfo };
+  if (!res.ok) throw new ApiError(data.error ?? { code: "serviceError", params: { status: res.status } });
   return data;
 }
+
+/** Ошибка из catch в виде кода для errorText. */
+export const toInfo = (error: unknown): ErrorInfo =>
+  error instanceof ApiError ? error.info : { code: "unknown", params: { message: String(error) } };
 
 export const api = {
   state: () => request<AppState>("/api/state"),
