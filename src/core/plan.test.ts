@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { RateLimitError } from "../lib/http";
 import { buildPlan, type CachedMatch, decide, type MatchCache, summarize, tracksToAdd } from "./plan";
 import type { MusicService } from "./service";
 import type { ServiceId, Track } from "./track";
@@ -133,5 +134,29 @@ describe("buildPlan", () => {
     decide(plan, second?.id ?? "", { trackId: "sx" });
     decide(plan, first?.id ?? "", "skip");
     expect(tracksToAdd(plan)[0]?.items.map((i) => i.match?.id)).toEqual(["sx"]);
+  });
+
+  test("ограничение поиска на сутки не отнимает найденное: план собирается частично", async () => {
+    const yandex = fakeService(
+      "yandex",
+      [
+        track("yandex", "y1", "Первая", "A"),
+        track("yandex", "y2", "Вторая", "A"),
+        track("yandex", "y3", "Третья", "A"),
+      ],
+      [],
+    );
+    let searches = 0;
+    const spotify: MusicService = {
+      ...fakeService("spotify", [], []),
+      async findCandidates(source) {
+        if (++searches > 1) throw new RateLimitError("Spotify", Date.now() + 82_000_000);
+        return [track("spotify", "s1", source.title, "A")];
+      },
+    };
+    const plan = await buildPlan({ services: { yandex, spotify }, directions: [...toSpotify], cache: memoryCache() });
+    expect(summarize(plan)).toMatchObject({ add: 1, unchecked: 2 });
+    expect(plan.limitedUntil.spotify).toBeGreaterThan(Date.now());
+    expect(searches).toBe(2);
   });
 });

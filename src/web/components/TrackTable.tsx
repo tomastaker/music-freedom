@@ -7,9 +7,11 @@ import type { Filter } from "./Meters";
 
 const LIMIT = 300;
 // Сначала то, что требует внимания или изменится, в конце то, что уже на месте.
-const ORDER: Record<PlanItem["status"], number> = { review: 0, add: 1, notFound: 2, exists: 3 };
+type RowStatus = Exclude<Filter, "all">;
+const ORDER: Record<RowStatus, number> = { review: 0, add: 1, notFound: 2, unchecked: 3, exists: 4 };
 
-function effectiveStatus(item: PlanItem): PlanItem["status"] {
+function effectiveStatus(item: PlanItem): RowStatus {
+  if (item.unchecked) return "unchecked";
   if (item.decision === "accepted") return "add";
   if (item.decision === "skipped") return "notFound";
   return item.status;
@@ -17,12 +19,14 @@ function effectiveStatus(item: PlanItem): PlanItem["status"] {
 
 function StatusLabel({ item }: { item: PlanItem }) {
   const status = effectiveStatus(item);
-  const icon = {
-    add: <Check weight="bold" />,
-    exists: <Minus weight="bold" />,
-    review: <Question weight="bold" />,
-    notFound: <X weight="bold" />,
-  }[status];
+  if (status === "unchecked") {
+    return (
+      <span className="status" data-status="exists">
+        <Minus weight="bold" />
+        {t("table.unchecked")}
+      </span>
+    );
+  }
   if (item.added) {
     return (
       <span className="status" data-status="add">
@@ -31,6 +35,12 @@ function StatusLabel({ item }: { item: PlanItem }) {
       </span>
     );
   }
+  const icon = {
+    add: <Check weight="bold" />,
+    exists: <Minus weight="bold" />,
+    review: <Question weight="bold" />,
+    notFound: <X weight="bold" />,
+  }[status];
   const text =
     item.decision === "accepted"
       ? t("table.accepted")
@@ -47,9 +57,16 @@ function StatusLabel({ item }: { item: PlanItem }) {
   );
 }
 
-const TABS: Filter[] = ["all", "review", "add", "notFound", "exists"];
+const TABS: Filter[] = ["all", "review", "add", "notFound", "exists", "unchecked"];
 // Те же цвета, что у индикаторов над таблицей: одно число — один цвет.
-const TONES: Record<Filter, string> = { all: "dim", review: "amber", add: "amber", notFound: "brick", exists: "dim" };
+const TONES: Record<Filter, string> = {
+  all: "dim",
+  review: "amber",
+  add: "amber",
+  notFound: "brick",
+  exists: "dim",
+  unchecked: "dim",
+};
 
 type Props = {
   items: PlanItem[];
@@ -83,7 +100,7 @@ export function TrackTable({ items, filter, onFilter, showDirection, onReview }:
       <div className="table-bar">
         <fieldset className="filter-tabs">
           <legend className="visually-hidden">{t("table.filters")}</legend>
-          {TABS.map((tab) => (
+          {TABS.filter((tab) => tab !== "unchecked" || count(tab) > 0).map((tab) => (
             <button
               key={tab}
               type="button"
@@ -91,7 +108,7 @@ export function TrackTable({ items, filter, onFilter, showDirection, onReview }:
               aria-pressed={filter === tab}
               onClick={() => onFilter(tab)}
             >
-              {tab === "all" ? t("table.filterAll") : t(`meter.${tab}`)}
+              {tab === "all" ? t("table.filterAll") : tab === "unchecked" ? t("table.uncheckedTab") : t(`meter.${tab}`)}
               <span className="filter-count" data-tone={TONES[tab]}>
                 {count(tab)}
               </span>

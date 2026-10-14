@@ -2,7 +2,7 @@
 // не трогая настоящие аккаунты. Данные синтетические.
 import type { MusicService } from "../core/service";
 import type { ServiceId, Track } from "../core/track";
-import { sleep } from "../lib/http";
+import { RateLimitError, sleep } from "../lib/http";
 
 type Seed = [title: string, artist: string, seconds: number];
 
@@ -70,8 +70,14 @@ class DemoService implements MusicService {
     return [...this.likes];
   }
 
+  private searches = 0;
+
   async findCandidates(source: Track) {
     await sleep(90);
+    // MF_DEMO_LIMIT=1: Spotify «ограничивает» поиск после пяти запросов, как настоящий на сутки.
+    if (process.env.MF_DEMO_LIMIT && this.id === "spotify" && ++this.searches > 5) {
+      throw new RateLimitError("Spotify", Date.now() + 22 * 60 * 60 * 1000);
+    }
     const word = source.title.toLowerCase().split(" ")[0] ?? "";
     return this.catalog.filter((t) => t.title.toLowerCase().includes(word));
   }

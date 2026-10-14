@@ -42,7 +42,13 @@ export type AppState = {
   job: JobState | null;
   /** Последняя ошибка фоновой задачи, пока пользователь её не закрыл. */
   jobError: string | null;
-  plan: { mode: TransferMode; version: number; summary: PlanSummary } | null;
+  plan: {
+    mode: TransferMode;
+    version: number;
+    summary: PlanSummary;
+    /** Сервис-цель ограничил поиск до этого времени: часть треков не проверена. */
+    limitedUntil: number | null;
+  } | null;
   lastRun: LastRun | null;
 };
 

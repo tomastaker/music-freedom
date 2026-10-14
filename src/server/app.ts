@@ -81,7 +81,12 @@ export class App {
       },
       job: this.job,
       jobError: this.jobError,
-      plan: this.plan && { mode: this.plan.mode, version: this.plan.version, summary: summarize(this.plan.data) },
+      plan: this.plan && {
+        mode: this.plan.mode,
+        version: this.plan.version,
+        summary: summarize(this.plan.data),
+        limitedUntil: Math.max(0, ...Object.values(this.plan.data.limitedUntil)) || null,
+      },
       lastRun: this.lastRun,
     };
   }

@@ -12,7 +12,7 @@ import { Reel } from "./components/Reel";
 import { Review } from "./components/Review";
 import { TrackTable } from "./components/TrackTable";
 import { Transport } from "./components/Transport";
-import { formatNumber, t } from "./i18n";
+import { formatNumber, t, tracks } from "./i18n";
 
 type Tab = "transfer" | "history";
 
@@ -30,6 +30,7 @@ function deckRunning(service: ServiceId, job: AppState["job"]): boolean {
 
 function downloadNotFound(items: PlanItem[]) {
   const lines = items
+    .filter((i) => !i.unchecked)
     .filter((i) => (i.status === "notFound" && i.decision !== "accepted") || i.decision === "skipped")
     .map((i) => `${i.source.artists.join(", ")} - ${fullTitle(i.source)}`);
   const blob = new Blob([`${lines.join("\n")}\n`], { type: "text/plain;charset=utf-8" });
@@ -259,6 +260,18 @@ export function App() {
             }}
           >
             {actionError ?? state.jobError}
+          </Banner>
+        )}
+        {compared && state.plan?.limitedUntil && (summary?.unchecked ?? 0) > 0 && !job && tab === "transfer" && (
+          <Banner tone="error">
+            {t("limited.text", {
+              until: new Date(state.plan.limitedUntil).toLocaleString("ru-RU", {
+                weekday: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              count: tracks(summary?.unchecked ?? 0),
+            })}
           </Banner>
         )}
         {lastRun && !job && tab === "transfer" && (

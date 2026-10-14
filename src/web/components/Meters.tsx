@@ -2,9 +2,9 @@ import type { PlanItem, PlanSummary } from "../../shared/api";
 import { t } from "../i18n";
 import { Counter } from "./Counter";
 
-export type Filter = "all" | PlanItem["status"];
+export type Filter = "all" | PlanItem["status"] | "unchecked";
 
-const METERS: { key: keyof PlanSummary; tone: "amber" | "dim" | "brick" }[] = [
+const METERS: { key: Exclude<keyof PlanSummary, "unchecked">; tone: "amber" | "dim" | "brick" }[] = [
   { key: "add", tone: "amber" },
   { key: "exists", tone: "dim" },
   { key: "review", tone: "amber" },

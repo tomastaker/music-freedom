@@ -1,3 +1,4 @@
+import { RateLimitError } from "../lib/http";
 import { bestMatch, LibraryIndex, type MatchLevel } from "./match";
 import type { MusicService } from "./service";
 import type { ServiceId, Track } from "./track";
@@ -25,6 +26,8 @@ export type PlanItem = {
   decision?: "accepted" | "skipped";
   /** Записан последним переносом. */
   added?: boolean;
+  /** Поиск не выполнялся: сервис временно ограничил запросы. Досравнивается позже. */
+  unchecked?: boolean;
 };
 
 export type Plan = {
@@ -33,6 +36,8 @@ export type Plan = {
   libraries: Partial<Record<ServiceId, number>>;
   /** Идентификаторы уже лайкнутых треков: ручной выбор не должен записать то, что уже есть. */
   likedIds: Partial<Record<ServiceId, string[]>>;
+  /** До какого момента сервис-цель ограничил поиск, если сравнение остановилось на нём. */
+  limitedUntil: Partial<Record<ServiceId, number>>;
   items: PlanItem[];
 };
 
@@ -77,6 +82,7 @@ export async function buildPlan(options: {
   }
 
   const items: PlanItem[] = [];
+  const limitedUntil: Plan["limitedUntil"] = {};
   const total = directions.reduce((sum, d) => sum + (likes.get(d.from)?.length ?? 0), 0);
   let done = 0;
   for (const { from, to } of directions) {
@@ -94,13 +100,21 @@ export async function buildPlan(options: {
         Object.assign(item, { status: "exists", match: present.candidate, level: present.level });
       } else {
         let found = cache.get(from, source.id, to);
-        if (!found) {
-          const candidates = await target.findCandidates(source);
-          const best = bestMatch(source, candidates);
-          found = { target: best?.candidate ?? null, level: best?.level, candidates: candidates.slice(0, 5) };
-          cache.set(from, source.id, to, found);
+        if (!found && limitedUntil[to] === undefined) {
+          try {
+            const candidates = await target.findCandidates(source);
+            const best = bestMatch(source, candidates);
+            found = { target: best?.candidate ?? null, level: best?.level, candidates: candidates.slice(0, 5) };
+            cache.set(from, source.id, to, found);
+          } catch (error) {
+            // Ограничение на сутки не должно отнимать уже найденное: план собирается частично.
+            if (!(error instanceof RateLimitError)) throw error;
+            limitedUntil[to] = error.retryAt;
+          }
         }
-        if (found.target && (likedIds.has(found.target.id) || plannedIds.has(found.target.id))) {
+        if (!found) {
+          item.unchecked = true;
+        } else if (found.target && (likedIds.has(found.target.id) || plannedIds.has(found.target.id))) {
           // Два трека источника свелись к одному треку цели: добавляем его один раз.
           Object.assign(item, { status: "exists", match: found.target, level: found.level });
         } else if (found.target && found.level !== "medium") {
@@ -126,6 +140,7 @@ export async function buildPlan(options: {
     directions,
     libraries: Object.fromEntries([...likes].map(([id, tracks]) => [id, tracks.length])),
     likedIds: Object.fromEntries([...likes].map(([id, tracks]) => [id, tracks.map((t) => t.id)])),
+    limitedUntil,
     items,
   };
 }
@@ -168,14 +183,15 @@ export function tracksToAdd(plan: Plan): { to: ServiceId; items: PlanItem[] }[] 
   });
 }
 
-export type PlanSummary = Record<"add" | "exists" | "review" | "notFound", number>;
+export type PlanSummary = Record<"add" | "exists" | "review" | "notFound" | "unchecked", number>;
 
 /** Сводка совпадает с тем, что реально запишется: повторы и уже лайкнутое считаются «уже есть». */
 export function summarize(plan: Plan): PlanSummary {
   const toWrite = new Set(tracksToAdd(plan).flatMap((group) => group.items.map((i) => i.id)));
-  const summary: PlanSummary = { add: 0, exists: 0, review: 0, notFound: 0 };
+  const summary: PlanSummary = { add: 0, exists: 0, review: 0, notFound: 0, unchecked: 0 };
   for (const item of plan.items) {
-    if (toWrite.has(item.id)) summary.add++;
+    if (item.unchecked) summary.unchecked++;
+    else if (toWrite.has(item.id)) summary.add++;
     else if (item.decision === "skipped") summary.notFound++;
     else if (item.status === "review" && !item.decision) summary.review++;
     else if (item.status === "notFound" && !item.decision) summary.notFound++;
